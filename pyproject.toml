@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "silent-p"
+version = "0.1.0"
+description = ""
+authors = ["Jack Gibson <jpgibson@uchicago.edu>"]
+readme = "README.md"
+
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.12"
+lightning = "^2.0.1.post0"
+pillow = "^9.5.0"
+opencv-python = "^4.7.0.72"
+pandas = "^2.0.0"
+matplotlib = "^3.7.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
