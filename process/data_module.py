@@ -6,8 +6,6 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as T
 from torchvision.io import read_image
 
-
-
 class CustomImageDataset(Dataset):
     def __init__(self, csv_file, img_dir_path, transform=None):
         """
@@ -44,7 +42,6 @@ class CustomImageDataset(Dataset):
         specified index
 
         Parameter: idx (int): index of interest
-
         Returns: image, label
         """
 
@@ -61,27 +58,16 @@ class CustomImageDataset(Dataset):
 
         return image, label
 
-
-
-/data/val/NORMAL/NORMAL2-IM-1427-0001.jpeg
-
 transforms = T.Compose(
     [
     # centercrop to consistent aspect ratio - relative height/width ratio
+    # crop is randomizing by default
     T.CenterCrop(size=(968,1320)),
 
     # resize - about the amount of pixels
     T.Resize((968,1320))
-    
-    
-    #random - filter, orientation - helps avoid overfitting
-    # T.RandomAdjustSharpness(sharpness_factor=2),
-    # T.RandomPosterize(bits=4, p=0.5)
-
-        
 
     ])
-
 
 training_data = CustomImageDataset("data/output/train.csv", "data/train/", transforms)
 val_data = CustomImageDataset("data/output/val.csv", "data/val/", transforms)
