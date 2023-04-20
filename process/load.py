@@ -25,11 +25,14 @@ def collect_image_files(split):
                                 'height' : None, 'width' : None, 'label' : label}) 
 
         for image_file in paths:
+          
+          full_path = label + '/' + image_file 
           channel, height, width = read_image(f'{img_dir}/{image_file}').shape
           
           temp_df.loc[(temp_df['path'] == image_file), 'channel'] = channel
           temp_df.loc[(temp_df['path'] == image_file), 'height'] = height
           temp_df.loc[(temp_df['path'] == image_file), 'width'] = width
+          temp_df.loc[(temp_df['path'] == image_file), 'path'] = full_path
 
         data.append(temp_df)
 
