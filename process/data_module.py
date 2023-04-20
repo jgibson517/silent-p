@@ -15,8 +15,7 @@ class CustomImageDataset(Dataset):
         here. But, I recommend at least you start with the three I listed here,
         as these are standard
 
-        csv_file (str): file path to the csv file you created /
-        df (pandas df): pandas dataframe
+        csv_file (str): file path to the csv file you created
 
         img_dir_path: directory path to your images
         transform: Compose (a PyTorch Class) that strings together several
@@ -29,7 +28,7 @@ class CustomImageDataset(Dataset):
         transformations, and therefore, it would make more sense to decide those
         transformations outside the dataset class and pass it to the dataset!
         """
-        self.img_labels = pd.read_csv(csv_file, usecols=['label'])
+        self.img_df = pd.read_csv(csv_file)
         self.img_dir = img_dir_path
         self.transform = transform
 
@@ -37,7 +36,7 @@ class CustomImageDataset(Dataset):
         """
         Returns: (int) length of your dataset
         """
-        return len(self.img_labels)
+        return len(self.img_df)
 
     def __getitem__(self, idx):
         """
@@ -49,13 +48,11 @@ class CustomImageDataset(Dataset):
         Returns: image, label
         """
 
-        img_path = None
+        img_path = f'{self.img_dir}{self.img_df.loc[:,"path"][idx]}'
+    
+        image = read_image(img_path)
         
-        image = None
-
-        label_idx = None
-        
-        label = self.img_labels.iloc[idx, label_idx]
+        label = self.img_df.loc[:,"label"][idx]
 
         # if you are transforming your image (i.e. you're dealing with training data),
         # you would do that here!
@@ -70,14 +67,25 @@ class CustomImageDataset(Dataset):
 
 transforms = T.Compose(
     [
-        T.RandomAdjustSharpness(sharpness_factor=2),
-        T.RandomPosterize(bits=4, p=0.5)
-    ] )
+    # centercrop to consistent aspect ratio - relative height/width ratio
+    T.CenterCrop(size=(968,1320)),
+
+    # resize - about the amount of pixels
+    T.Resize((968,1320))
+    
+    
+    #random - filter, orientation - helps avoid overfitting
+    # T.RandomAdjustSharpness(sharpness_factor=2),
+    # T.RandomPosterize(bits=4, p=0.5)
+
+        
+
+    ])
 
 
-training_data = CustomImageDataset(csv, img_dir_path, transforms)
-val_data = CustomImageDataset(csv, img_dir_path, transforms)
-test_data = CustomImageDataset(csv, img_dir_path, transforms)
+training_data = CustomImageDataset("data/output/train.csv", "data/train/", transforms)
+val_data = CustomImageDataset("data/output/val.csv", "data/val/", transforms)
+test_data = CustomImageDataset("data/output/test.csv", "data/test/", transforms)
 
 train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True)
 val_dataloader = DataLoader(val_data, batch_size=64, shuffle=True)
