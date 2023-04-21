@@ -10,7 +10,7 @@ def collect_image_files(split):
     Inputs:
         split (str): test, train, or val
 
-    Oututs: csv file
+    Outputs: csv file
     '''
     data = []
     img_dir = f"data/{split}"
