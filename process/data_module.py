@@ -64,10 +64,6 @@ class CustomImageDataset(Dataset):
 
         return image, label
 
-
-
-/data/val/NORMAL/NORMAL2-IM-1427-0001.jpeg
-
 transforms = T.Compose(
     [
         T.RandomAdjustSharpness(sharpness_factor=2),
