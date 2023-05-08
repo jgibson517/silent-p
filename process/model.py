@@ -71,6 +71,8 @@ class CustomNeuralNetwork(nn.Module):
 
             self.train()
             running_loss = 0.0
+            total_correct = 0
+            total_samples = 0
             
             for i in range(len(train_dataloader)):
             # Reshapes inputs tensor to work in the NN
@@ -81,68 +83,75 @@ class CustomNeuralNetwork(nn.Module):
             # zero the parameter gradients
                 self.optimizer.zero_grad()
 
-        # forward + backward + optimize
+             # forward + backward + optimize
                 outputs = self(inputs)
                 self.loss = self.criterion(outputs, labels)
                 self.loss.backward()
                 self.optimizer.step()
-
+                
             # keep track of the loss
             running_loss += self.loss.item()
+            # counts for acccuracy score
+            _, predicted = torch.max(outputs.data, 1)
+            total_correct += (predicted == labels).sum().item()
+            total_samples += labels.size(0)
 
       # ALSO CALCULATE YOUR ACCURACY METRIC
       
         avg_train_loss = running_loss / (i + 1)
         # CALCULATE AVERAGE ACCURACY METRIC
-        avg_train_loss = None
+        avg_train_acc = total_correct / total_samples
         train_losses.append(avg_train_loss)
+        train_accuracies.append(avg_train_acc)
 
         return train_losses, train_accuracies
 
 
     def evaluate_model(self, dataloader, type):
-            
-        # CAN USE FOR EITHER VAL OR TEST DATALOADER
-        if type == "val":
-            self.eval()
-        if type == "test":
-            self.test()
+        
+        #revisit after the above works
+        pass    
+        # # CAN USE FOR EITHER VAL OR TEST DATALOADER
+        # if type == "val":
+        #     self.eval()
+        # if type == "test":
+        #     self.test()
 
-        #initialize lists
-        losses = []
-        accuracies = []
+        # #initialize lists
+        # losses = []
+        # accuracies = []
 
-        running_loss = 0.0
-        correctly_predicted_normal = 0
-        total_normal = 0
+        # running_loss = 0.0
+        # correctly_predicted_normal = 0
+        # total_normal = 0
     
-        for i, data in enumerate(dataloader):
-            # get the inputs; data is a list of [inputs, labels]
-            inputs, labels = data
+        # for i, data in enumerate(dataloader):
+        #     # get the inputs; data is a list of [inputs, labels]
+        #     inputs, labels = data
 
-            if labels == 'NORMAL':
-                total_normal += 1
+        #     if labels == 'NORMAL':
+        #         total_normal += 1
 
-            # zero the parameter gradients
-            self.optimizer.zero_grad()
+        #     # zero the parameter gradients
+        #     self.optimizer.zero_grad()
 
-            # forward + backward + optimize
-            outputs = self(inputs)
-            loss = self.criterion(outputs, labels)
+        #     # forward + backward + optimize
+        #     outputs = self(inputs)
+        #     loss = self.criterion(outputs, labels)
 
-            # keep track of the loss
-            running_loss += loss.item()
+        #     # keep track of the loss
+        #     running_loss += loss.item()
             
-        # ALSO CALCULATE YOUR ACCURACY METRIC
-        avg_train_loss = running_loss / (i + 1)     # i + 1 gives us the total number of batches in train dataloader
+        # # ALSO CALCULATE YOUR ACCURACY METRIC
+        # avg_train_loss = running_loss / (i + 1)     # i + 1 gives us the total number of batches in train dataloader
 
-        # CALCULATE AVERAGE ACCURACY METRIC
-        avg_train_acc = correctly_predicted_normal / total_normal
+        # # CALCULATE AVERAGE ACCURACY METRIC
+        # avg_train_acc = correctly_predicted_normal / total_normal
 
-        losses.append(avg_train_loss)
-        accuracies.append(avg_train_acc)
+        # losses.append(avg_train_loss)
+        # accuracies.append(avg_train_acc)
 
-        return losses, accuracies
+        # return losses, accuracies
 
 
     def get_loss_graph(epochs, train_losses, test_losses):
