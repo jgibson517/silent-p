@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from torchvision.io import read_image
 
+
 def collect_image_files(split):
     '''
     Aggegrates file paths into csv file containing the file handle,
