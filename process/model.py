@@ -6,6 +6,7 @@ import torch.nn as nn # basic building block for neural neteorks
 import torch.nn.functional as F # import convolution functions like Relu
 import torch.optim as optim # optimzer
 from torch.utils.data import DataLoader
+import matplotlib as plt
 
 # internal imports
 import os
@@ -48,45 +49,27 @@ class CustomNeuralNetwork(nn.Module):
         # First Convultion layer: adds 625176 (1902936)
         # Second layer: pools new features together: removes 652488 features (1250448)
         # Final Total before linear tranformation: 1250448 
+            # layers: [0, 16, 239, 327] - same as our calculation 
 
         # 3: Define a Loss function and optimizer
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.SGD(self.parameters(), lr=0.001, momentum=0.9)
 
     def forward(self, x):
-        # after writing the below out, I don't think it's actually needed
-
-        # for layers in self.LeNet:
-        #     # run x through each layer of the neural net as laid out above
-
-        #     #if layer has multiple components, then go through each (not sure if this is needed)
-        #     if len(layers) > 1:
-        #         for layer in layers:
-        #             x = layer(x)
-            
-        #     # if just one transformation, then reassign x to that new value
-        #     x = layers(x)
-
-        #     return x
-
         out = self.LeNet(x)
         return out
     
-    def train(self, model, train_dataloader, epochs=50):
+    def train_model(self, train_dataloader, epochs=50):
 
         # Initalize NN model; could also go outside the function 
-        model = CustomNeuralNetwork()
+        #model = CustomNeuralNetwork()
        
         train_losses = []
         train_accuracies = []
-        val_losses = []
-        val_accuarcies = []
 
         for _ in range(epochs):  # loop over the dataset multiple times
 
-            model.train()
-            running_loss = 0.0
-            model.train()
+            self.train()
             running_loss = 0.0
             
             for i in range(len(train_dataloader)):
@@ -99,7 +82,7 @@ class CustomNeuralNetwork(nn.Module):
                 self.optimizer.zero_grad()
 
         # forward + backward + optimize
-                outputs = model(inputs)
+                outputs = self(inputs)
                 self.loss = self.criterion(outputs, labels)
                 self.loss.backward()
                 self.optimizer.step()
@@ -109,30 +92,90 @@ class CustomNeuralNetwork(nn.Module):
 
       # ALSO CALCULATE YOUR ACCURACY METRIC
       
-        avg_train_loss = running_loss / (i + 1)     # i + 1 gives us the total number of batches in train dataloader
+        avg_train_loss = running_loss / (i + 1)
         # CALCULATE AVERAGE ACCURACY METRIC
         avg_train_loss = None
         train_losses.append(avg_train_loss)
 
+        return train_losses, train_accuracies
 
-    def train(self, test_dataloader):
-        # FOR TESTING YOU DON'T HAVE TO ITERATE OVER MULTIPLE EPOCHS
-        # JUST ONE PASS OVER THE TEST DATALOADER!
-        pass
 
-    def analyze():
-        pass
+    def evaluate_model(self, dataloader, type):
+            
+        # CAN USE FOR EITHER VAL OR TEST DATALOADER
+        if type == "val":
+            self.eval()
+        if type == "test":
+            self.test()
+
+        #initialize lists
+        losses = []
+        accuracies = []
+
+        running_loss = 0.0
+        correctly_predicted_normal = 0
+        total_normal = 0
+    
+        for i, data in enumerate(dataloader):
+            # get the inputs; data is a list of [inputs, labels]
+            inputs, labels = data
+
+            if labels == 'NORMAL':
+                total_normal += 1
+
+            # zero the parameter gradients
+            self.optimizer.zero_grad()
+
+            # forward + backward + optimize
+            outputs = self(inputs)
+            loss = self.criterion(outputs, labels)
+
+            # keep track of the loss
+            running_loss += loss.item()
+            
+        # ALSO CALCULATE YOUR ACCURACY METRIC
+        avg_train_loss = running_loss / (i + 1)     # i + 1 gives us the total number of batches in train dataloader
+
+        # CALCULATE AVERAGE ACCURACY METRIC
+        avg_train_acc = correctly_predicted_normal / total_normal
+
+        losses.append(avg_train_loss)
+        accuracies.append(avg_train_acc)
+
+        return losses, accuracies
+
+
+    def get_loss_graph(epochs, train_losses, test_losses):
+                
+        epochs_array = [i for i in range (1, epochs, epochs/10)]
         
-        # 6: ANAYLZE (i.e. 3RD OBJECTIVE)
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20,10))
+        ax.plot(epochs_array, train_losses, color="orange", label="train losses", ls='dashed')
+        ax.plot(epochs_array, test_losses, color="blue", label="test losses")
+        ax.grid(alpha=0.25)
+        ax.set_axis_on()
+        ax.legend(loc="lower right", fontsize=16)
+        ax.set_xlabel("epochs", fontsize=16)
+        ax.set_ylabel("loss", fontsize=16)
+        # reset consistent axis for comparison purposes
+        plt.ylim([0, 1])
+        plt.show()
 
-        # YOU CAN MAKE GRAPHS of TRAIN AND VAL LOSSES OVER EPOCHS, etc!
-        # YOU CAN ALSO DO MULTIPLE TRAININGS, CHOOSING A DIFFERENT LOSS FUNCTION
-        # FOR EACH TRAINING RUN, AND THEN YOU COULD COMPARE HOW WHICH LOSS FUNCTION
-        # LEADS TO THE BEST LOSSES OR BEST ACCURACIES
-
-        # ALSO YOU COULD TRAIN USING DIFFERENT OPTIMIZERS!
-
-        # SO MUCH YOU COULD DO!
+    def get_accuracy_graph(epochs, train_accuracies, test_accuracies):
+        
+        epochs_array = [i for i in range (1, epochs, epochs/10)]
+        
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20,10))
+        ax.plot(epochs_array, train_accuracies, color="orange", label="train accuracies", ls='dashed')
+        ax.plot(epochs_array, test_accuracies, color="blue", label="train accuracies")
+        ax.grid(alpha=0.25)
+        ax.set_axis_on()
+        ax.legend(loc="lower right", fontsize=16)
+        ax.set_xlabel("epochs", fontsize=16)
+        ax.set_ylabel("loss", fontsize=16)
+        # reset consistent axis for comparison purposes
+        plt.ylim([0, 1])
+        plt.show()
 
 
 # 2: get dataloaders from the first checkpoint
