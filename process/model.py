@@ -95,8 +95,7 @@ class CustomNeuralNetwork(nn.Module):
             _, predicted = torch.max(outputs.data, 1)
             total_correct += (predicted == labels).sum().item()
             total_samples += labels.size(0)
-
-      # ALSO CALCULATE YOUR ACCURACY METRIC
+    
       
         avg_train_loss = running_loss / (i + 1)
         # CALCULATE AVERAGE ACCURACY METRIC
@@ -107,51 +106,30 @@ class CustomNeuralNetwork(nn.Module):
         return train_losses, train_accuracies
 
 
-    def evaluate_model(self, dataloader, type):
+    def evaluate_model(self, dataloader):
+
+        # Evaluate model with testing data
+        # implement a similar loop!
+        # but you can leave out loss.backward()
         
-        #revisit after the above works
-        pass    
-        # # CAN USE FOR EITHER VAL OR TEST DATALOADER
-        # if type == "val":
-        #     self.eval()
-        # if type == "test":
-        #     self.test()
+        test_accuracies = []
+        # tills model not to track gradients
+        self.eval()
 
-        # #initialize lists
-        # losses = []
-        # accuracies = []
+        for i in range(len(dataloader)):
+            inputs, labels = dataloader[i]
+            inputs = inputs.type(torch.float32)
+            inputs.unsqueeze_(0) 
 
-        # running_loss = 0.0
-        # correctly_predicted_normal = 0
-        # total_normal = 0
-    
-        # for i, data in enumerate(dataloader):
-        #     # get the inputs; data is a list of [inputs, labels]
-        #     inputs, labels = data
-
-        #     if labels == 'NORMAL':
-        #         total_normal += 1
-
-        #     # zero the parameter gradients
-        #     self.optimizer.zero_grad()
-
-        #     # forward + backward + optimize
-        #     outputs = self(inputs)
-        #     loss = self.criterion(outputs, labels)
-
-        #     # keep track of the loss
-        #     running_loss += loss.item()
+            with torch.no_grad:
+                outputs = self(inputs)
+                self.loss = self.criterion(outputs, labels)
             
-        # # ALSO CALCULATE YOUR ACCURACY METRIC
-        # avg_train_loss = running_loss / (i + 1)     # i + 1 gives us the total number of batches in train dataloader
+        test_loss = self.loss.item()
+        _, predicted = torch.max(outputs.data, 1)
+        total_correct = (predicted == labels).sum().item()
 
-        # # CALCULATE AVERAGE ACCURACY METRIC
-        # avg_train_acc = correctly_predicted_normal / total_normal
-
-        # losses.append(avg_train_loss)
-        # accuracies.append(avg_train_acc)
-
-        # return losses, accuracies
+        return test_loss, total_correct
 
 
     def get_loss_graph(epochs, train_losses, test_losses):

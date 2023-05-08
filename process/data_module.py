@@ -78,11 +78,11 @@ transforms = T.Compose(
     ])
 
 training_data = CustomImageDataset("data/output/train.csv", "data/train/", transforms)
-val_data = CustomImageDataset("data/output/val.csv", "data/val/", transforms)
+# val_data = CustomImageDataset("data/output/val.csv", "data/val/", transforms)
 test_data = CustomImageDataset("data/output/test.csv", "data/test/", transforms)
 
 train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True)
-val_dataloader = DataLoader(val_data, batch_size=64, shuffle=True)
+# val_dataloader = DataLoader(val_data, batch_size=64, shuffle=True)
 test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True)
 
 
