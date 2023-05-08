@@ -5,6 +5,7 @@ from torch.utils import data
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as T
 from torchvision.io import read_image
+import torch
 
 class CustomImageDataset(Dataset):
     def __init__(self, csv_file, img_dir_path, transform=None):
@@ -50,13 +51,20 @@ class CustomImageDataset(Dataset):
         image = read_image(img_path)
         
         label = self.img_df.loc[:,"label"][idx]
+        
+        #Jack: not sure if this how to set the labels, but this matches the size 
+        # of the output from the model... 
+        if label == 'NORMAL':
+            num_label = torch.tensor([[0, 1]], dtype=torch.float64)
+        else:
+            num_label = torch.tensor([[1, 0]], dtype=torch.float64) 
 
         # if you are transforming your image (i.e. you're dealing with training data),
         # you would do that here!
         if self.transform:
             image = self.transform(image)
 
-        return image, label
+        return image, num_label
 
 transforms = T.Compose(
     [

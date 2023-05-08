@@ -33,13 +33,21 @@ class CustomNeuralNetwork(nn.Module):
               nn.MaxPool2d(kernel_size = 2, stride = 2)),             # POOLING
             # fully connected layers
             nn.Flatten(),
-            nn.Linear(250000, 120),                                   # THIRD LAYER: LINEAR YEAR, HIDDEN LAYER 2
+            nn.Linear(1250448, 120),                                   # THIRD LAYER: LINEAR YEAR, HIDDEN LAYER 2
             nn.ReLU(),                                                # HIDDEN LAYER's ACTIVATION FUNCION
             nn.Linear(120, 84),                                       # FOURTH LAYER: LINEAR YEAR, HIDDEN LAYER 3
             nn.ReLU(),                                                # HIDDEN LAYER's ACTIVATION FUNCION
             # output layer
             nn.Linear(84, 2)                                          # OUTPUT LAYER
         )
+
+
+        # Jack: Math for the input size for first nn.Linear
+        # Image features
+        # Before forward: 1277760 (968 * 1320; height x width) 
+        # First Convultion layer: adds 625176 (1902936)
+        # Second layer: pools new features together: removes 652488 features (1250448)
+        # Final Total before linear tranformation: 1250448 
 
         # 3: Define a Loss function and optimizer
         self.criterion = nn.CrossEntropyLoss()
@@ -64,52 +72,48 @@ class CustomNeuralNetwork(nn.Module):
         out = self.LeNet(x)
         return out
     
-    def train(self, train_dataloader, epochs=50):
-        pass
-    #     # 4: Train and validate the network
+    def train(self, model, train_dataloader, epochs=50):
 
-    #     #initialize lists
-    #     train_losses = []
-    #     train_accuracies = []
-    #     val_losses = []
-    #     val_accuarcies = []
+        # Initalize NN model; could also go outside the function 
+        model = CustomNeuralNetwork()
+       
+        train_losses = []
+        train_accuracies = []
+        val_losses = []
+        val_accuarcies = []
 
-    #     for _ in range(epochs):  # loop over the dataset multiple times
+        for _ in range(epochs):  # loop over the dataset multiple times
 
-    #         # TRAIN
-    #         # Make sure gradient tracking is on, and do a pass over the data
-    #         model.train()
-    #         running_loss = 0.0
-    #         for i, data in enumerate(train_dataloader):
-    #             # get the inputs; data is a list of [inputs, labels]
-    #             inputs, labels = data
-
-    #             # zero the parameter gradients
-    #             optimizer.zero_grad()
-
-    #             # forward + backward + optimize
-    #             outputs = model(inputs)
-    #             loss = criterion(outputs, labels)
-    #             #loss.backward()
-    #             optimizer.step()
-
-    #             # keep track of the loss
-    #             running_loss += loss.item()
-                
-    #             # ALSO CALCULATE YOUR ACCURACY METRIC
-    #             avg_train_loss = running_loss / (i + 1)     # i + 1 gives us the total number of batches in train dataloader
-                
-    #         # CALCULATE AVERAGE ACCURACY METRIC
-    #         # avg_train_loss = ## pass loss metric
-    #         # train_losses.append(avg_train_loss)
-    #         # train_accuracies.append(avg_train_acc)
-
-    #         #VALIDATE
-    #         # in the validation part, we don't want to keep track of the gradients 
-    #         model.eval()            
+            model.train()
+            running_loss = 0.0
+            model.train()
+            running_loss = 0.0
             
-    #         # implement a similar loop!
-    #         # but you can leave out loss.backward()
+            for i in range(len(train_dataloader)):
+            # Reshapes inputs tensor to work in the NN
+                inputs, labels = train_dataloader[i]     
+                inputs = inputs.type(torch.float32)
+                inputs.unsqueeze_(0) 
+        
+            # zero the parameter gradients
+                self.optimizer.zero_grad()
+
+        # forward + backward + optimize
+                outputs = model(inputs)
+                self.loss = self.criterion(outputs, labels)
+                self.loss.backward()
+                self.optimizer.step()
+
+            # keep track of the loss
+            running_loss += self.loss.item()
+
+      # ALSO CALCULATE YOUR ACCURACY METRIC
+      
+        avg_train_loss = running_loss / (i + 1)     # i + 1 gives us the total number of batches in train dataloader
+        # CALCULATE AVERAGE ACCURACY METRIC
+        avg_train_loss = None
+        train_losses.append(avg_train_loss)
+
 
     def train(self, test_dataloader):
         # FOR TESTING YOU DON'T HAVE TO ITERATE OVER MULTIPLE EPOCHS
@@ -130,7 +134,6 @@ class CustomNeuralNetwork(nn.Module):
 
         # SO MUCH YOU COULD DO!
 
-model = CustomNeuralNetwork()
 
 # 2: get dataloaders from the first checkpoint
 training_data = CustomImageDataset("data/output/train.csv", "data/train/", transforms)
