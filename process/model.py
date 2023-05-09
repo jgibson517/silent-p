@@ -35,7 +35,7 @@ class CustomNeuralNetwork(nn.Module):
               nn.MaxPool2d(kernel_size = 2, stride = 2)),             # POOLING
             # fully connected layers
             nn.Flatten(),
-            nn.Linear(250000, 120),                                   # THIRD LAYER: LINEAR YEAR, HIDDEN LAYER 2
+            nn.Linear(59536, 120),                                   # THIRD LAYER: LINEAR YEAR, HIDDEN LAYER 2
             nn.ReLU(),                                                # HIDDEN LAYER's ACTIVATION FUNCION
             nn.Linear(120, 84),                                       # FOURTH LAYER: LINEAR YEAR, HIDDEN LAYER 3
             nn.ReLU(),                                                # HIDDEN LAYER's ACTIVATION FUNCION
@@ -69,15 +69,11 @@ class CustomNeuralNetwork(nn.Module):
         train_accuracies = []
         train_recall = []
 
-        tot_pred = torch.empty(0)
-
 
         for epoch in range(epochs):  # loop over the dataset multiple times
             print('Epoch:', epoch)
             self.train()
             running_loss = 0.0
-            total_correct = 0
-            total_samples = 0
 
             tot_pred = torch.empty(0)
             all_labels = torch.empty(0)
@@ -99,12 +95,13 @@ class CustomNeuralNetwork(nn.Module):
 
                  # counts for acccuracy score
                 _, predicted = torch.max(outputs.data, 1)
+            
                 # Concatate batch of prediction and labels togehter
                 tot_pred = torch.cat((tot_pred, predicted))
                 all_labels = torch.cat((all_labels, labels))
 
-            # keep track of the loss
-            running_loss += self.loss.item()
+                # keep track of the loss
+                running_loss += self.loss.item()
             
             # Calculate baseline accuracy: Correct/Total 
             total_correct = (tot_pred == all_labels).sum().item()
@@ -117,7 +114,7 @@ class CustomNeuralNetwork(nn.Module):
             train_losses.append(avg_train_loss)
             train_accuracies.append(avg_train_acc)
             # May want to change poss label to zero to measure the Normal predictions
-            train_recall.append(recall_score(tot_pred, all_labels, pos_label=1))
+            train_recall.append(recall_score(tot_pred, all_labels, pos_label=0))
 
         return train_losses, train_accuracies, train_recall
 
@@ -129,29 +126,33 @@ class CustomNeuralNetwork(nn.Module):
 
         tot_pred = torch.empty(0)
         all_labels = torch.empty(0)
-
-        #  for epoch in range(epochs): we need accuracy scores for every epoch the test data?
-
+        test_loss = 0.0
+     
         for i, data in enumerate(dataloader):
             inputs, labels = data
             inputs = inputs.type(torch.float32)
             
             with torch.no_grad():
                 outputs = self(inputs)
-               
-            _, predicted = torch.max(outputs.data, 1)
-            # Concatate batch of prediction and labels togehter
-            tot_pred = torch.cat((tot_pred, predicted))
-            all_labels = torch.cat((all_labels, labels))
+                batch_loss = self.criterion(outputs, labels)
+                _, predicted = torch.max(outputs.data, 1)
+        
+                # Concatate batch of prediction and labels togehter
+                tot_pred = torch.cat((tot_pred, predicted))
+                all_labels = torch.cat((all_labels, labels))
+
+                test_loss += batch_loss.item()
 
         total_correct = (tot_pred == all_labels).sum().item()
         total_samples = all_labels.size(0)
 
+        avg_test_loss = test_loss / (i + 1)
+
         test_acc = total_correct / total_samples
         # Same note as above 
-        test_recall = recall_score(tot_pred, all_labels, pos_label=1)
+        test_recall = recall_score(tot_pred, all_labels, pos_label=0)
 
-        return test_acc, test_recall
+        return test_acc, test_recall, avg_test_loss
 
 
     def get_loss_graph(self, epochs, train_losses, test_losses=None):
