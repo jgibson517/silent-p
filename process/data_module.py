@@ -6,6 +6,9 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as T
 from torchvision.io import read_image
 import torch
+import warnings
+
+warnings.simplefilter("ignore")
 
 class CustomImageDataset(Dataset):
     def __init__(self, csv_file, img_dir_path, transform=None):
@@ -70,10 +73,10 @@ transforms = T.Compose(
     [
     # centercrop to consistent aspect ratio - relative height/width ratio
     # crop is randomizing by default
-    T.CenterCrop(size=(512,512)),
+    T.CenterCrop(size=(256,256)),
 
     # resize - about the amount of pixels
-    T.Resize((512,512)),
+    T.Resize((256,256)),
 
     # Some images read in with three channels
     T.Grayscale(num_output_channels=1)
