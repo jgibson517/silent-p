@@ -7,6 +7,7 @@ import torch.nn.functional as F # import convolution functions like Relu
 import torch.optim as optim # optimzer
 from torch.utils.data import DataLoader
 import matplotlib as plt
+from sklearn.metrics import recall_score
 
 # internal imports
 import os
@@ -34,7 +35,7 @@ class CustomNeuralNetwork(nn.Module):
               nn.MaxPool2d(kernel_size = 2, stride = 2)),             # POOLING
             # fully connected layers
             nn.Flatten(),
-            nn.Linear(1250448, 120),                                   # THIRD LAYER: LINEAR YEAR, HIDDEN LAYER 2
+            nn.Linear(250000, 120),                                   # THIRD LAYER: LINEAR YEAR, HIDDEN LAYER 2
             nn.ReLU(),                                                # HIDDEN LAYER's ACTIVATION FUNCION
             nn.Linear(120, 84),                                       # FOURTH LAYER: LINEAR YEAR, HIDDEN LAYER 3
             nn.ReLU(),                                                # HIDDEN LAYER's ACTIVATION FUNCION
@@ -66,20 +67,27 @@ class CustomNeuralNetwork(nn.Module):
        
         train_losses = []
         train_accuracies = []
+        train_recall = []
 
-        for _ in range(epochs):  # loop over the dataset multiple times
+        tot_pred = torch.empty(0)
 
+
+        for epoch in range(epochs):  # loop over the dataset multiple times
+            print('Epoch:', epoch)
             self.train()
             running_loss = 0.0
             total_correct = 0
             total_samples = 0
-            
-            for i in range(len(train_dataloader)):
+
+            tot_pred = torch.empty(0)
+            all_labels = torch.empty(0)
+
+            for i, data in enumerate(train_dataloader):
             # Reshapes inputs tensor to work in the NN
-                inputs, labels = train_dataloader[i]     
+                inputs, labels = data     
                 inputs = inputs.type(torch.float32)
-                inputs.unsqueeze_(0) 
-        
+
+    
             # zero the parameter gradients
                 self.optimizer.zero_grad()
 
@@ -88,22 +96,30 @@ class CustomNeuralNetwork(nn.Module):
                 self.loss = self.criterion(outputs, labels)
                 self.loss.backward()
                 self.optimizer.step()
-                
+
+                 # counts for acccuracy score
+                _, predicted = torch.max(outputs.data, 1)
+                # Concatate batch of prediction and labels togehter
+                tot_pred = torch.cat((tot_pred, predicted))
+                all_labels = torch.cat((all_labels, labels))
+
             # keep track of the loss
             running_loss += self.loss.item()
-            # counts for acccuracy score
-            _, predicted = torch.max(outputs.data, 1)
-            total_correct += (predicted == labels).sum().item()
-            total_samples += labels.size(0)
-    
+            
+            # Calculate baseline accuracy: Correct/Total 
+            total_correct = (tot_pred == all_labels).sum().item()
+            total_samples = all_labels.size(0)
       
-        avg_train_loss = running_loss / (i + 1)
-        # CALCULATE AVERAGE ACCURACY METRIC
-        avg_train_acc = total_correct / total_samples
-        train_losses.append(avg_train_loss)
-        train_accuracies.append(avg_train_acc)
+            avg_train_loss = running_loss / (i + 1)
+            # CALCULATE AVERAGE ACCURACY METRIC
+            avg_train_acc = total_correct / total_samples
 
-        return train_losses, train_accuracies
+            train_losses.append(avg_train_loss)
+            train_accuracies.append(avg_train_acc)
+            # May want to change poss label to zero to measure the Normal predictions
+            train_recall.append(recall_score(tot_pred, all_labels, pos_label=1))
+
+        return train_losses, train_accuracies, train_recall
 
 
     def evaluate_model(self, dataloader):
@@ -112,24 +128,33 @@ class CustomNeuralNetwork(nn.Module):
         # implement a similar loop!
         # but you can leave out loss.backward()
         
-        test_accuracies = []
+
         # tills model not to track gradients
         self.eval()
 
-        for i in range(len(dataloader)):
-            inputs, labels = dataloader[i]
+        tot_pred = torch.empty(0)
+        all_labels = torch.empty(0)
+
+        for i, data in enumerate(dataloader):
+            inputs, labels = data
             inputs = inputs.type(torch.float32)
-            inputs.unsqueeze_(0) 
-
-            with torch.no_grad:
-                outputs = self(inputs)
-                self.loss = self.criterion(outputs, labels)
             
-        test_loss = self.loss.item()
-        _, predicted = torch.max(outputs.data, 1)
-        total_correct = (predicted == labels).sum().item()
+            with torch.no_grad():
+                outputs = self(inputs)
+               
+            _, predicted = torch.max(outputs.data, 1)
+            # Concatate batch of prediction and labels togehter
+            tot_pred = torch.cat((tot_pred, predicted))
+            all_labels = torch.cat((all_labels, labels))
 
-        return test_loss, total_correct
+        total_correct = (tot_pred == all_labels).sum().item()
+        total_samples = all_labels.size(0)
+
+        test_acc = total_correct / total_samples
+        # Same note as above 
+        test_recall = recall_score(tot_pred, all_labels, pos_label=1)
+
+        return test_acc, test_recall
 
 
     def get_loss_graph(epochs, train_losses, test_losses):
@@ -167,10 +192,10 @@ class CustomNeuralNetwork(nn.Module):
 
 # 2: get dataloaders from the first checkpoint
 training_data = CustomImageDataset("data/output/train.csv", "data/train/", transforms)
-val_data = CustomImageDataset("data/output/val.csv", "data/val/", transforms)
+# val_data = CustomImageDataset("data/output/val.csv", "data/val/", transforms)
 test_data = CustomImageDataset("data/output/test.csv", "data/test/", transforms)
 
 train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True)
-val_dataloader = DataLoader(val_data, batch_size=64, shuffle=True)
+# val_dataloader = DataLoader(val_data, batch_size=64, shuffle=True)
 test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True)
 

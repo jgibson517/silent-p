@@ -52,12 +52,12 @@ class CustomImageDataset(Dataset):
         
         label = self.img_df.loc[:,"label"][idx]
         
-        #Jack: not sure if this how to set the labels, but this matches the size 
+        # Jack: not sure if this how to set the labels, but this matches the size 
         # of the output from the model... 
         if label == 'NORMAL':
-            num_label = torch.tensor([[0, 1]], dtype=torch.float64)
+            num_label = 0
         else:
-            num_label = torch.tensor([[1, 0]], dtype=torch.float64) 
+            num_label = 1
 
         # if you are transforming your image (i.e. you're dealing with training data),
         # you would do that here!
@@ -70,20 +70,23 @@ transforms = T.Compose(
     [
     # centercrop to consistent aspect ratio - relative height/width ratio
     # crop is randomizing by default
-    T.CenterCrop(size=(968,1320)),
+    T.CenterCrop(size=(512,512)),
 
     # resize - about the amount of pixels
-    T.Resize((968,1320))
+    T.Resize((512,512)),
+
+    # Some images read in with three channels
+    T.Grayscale(num_output_channels=1)
 
     ])
 
-training_data = CustomImageDataset("data/output/train.csv", "data/train/", transforms)
-# val_data = CustomImageDataset("data/output/val.csv", "data/val/", transforms)
-test_data = CustomImageDataset("data/output/test.csv", "data/test/", transforms)
+# training_data = CustomImageDataset("data/output/train.csv", "data/train/", transforms)
+# # val_data = CustomImageDataset("data/output/val.csv", "data/val/", transforms)
+# test_data = CustomImageDataset("data/output/test.csv", "data/test/", transforms)
 
-train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True)
-# val_dataloader = DataLoader(val_data, batch_size=64, shuffle=True)
-test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True)
+# train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True)
+# # val_dataloader = DataLoader(val_data, batch_size=64, shuffle=True)
+# test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True)
 
 
             
