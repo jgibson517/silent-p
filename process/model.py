@@ -6,7 +6,7 @@ import torch.nn as nn # basic building block for neural neteorks
 import torch.nn.functional as F # import convolution functions like Relu
 import torch.optim as optim # optimzer
 from torch.utils.data import DataLoader
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from sklearn.metrics import recall_score
 
 # internal imports
@@ -124,16 +124,13 @@ class CustomNeuralNetwork(nn.Module):
 
     def evaluate_model(self, dataloader):
 
-        # Evaluate model with testing data
-        # implement a similar loop!
-        # but you can leave out loss.backward()
-        
-
         # tills model not to track gradients
         self.eval()
 
         tot_pred = torch.empty(0)
         all_labels = torch.empty(0)
+
+        #  for epoch in range(epochs): we need accuracy scores for every epoch the test data?
 
         for i, data in enumerate(dataloader):
             inputs, labels = data
@@ -157,45 +154,44 @@ class CustomNeuralNetwork(nn.Module):
         return test_acc, test_recall
 
 
-    def get_loss_graph(epochs, train_losses, test_losses):
+    def get_loss_graph(self, epochs, train_losses, test_losses=None):
                 
-        epochs_array = [i for i in range (1, epochs, epochs/10)]
+        epochs_array = [i for i in range (0, epochs)]
         
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20,10))
         ax.plot(epochs_array, train_losses, color="orange", label="train losses", ls='dashed')
-        ax.plot(epochs_array, test_losses, color="blue", label="test losses")
+        #ax.plot(epochs_array, test_losses, color="blue", label="test losses")
         ax.grid(alpha=0.25)
         ax.set_axis_on()
         ax.legend(loc="lower right", fontsize=16)
         ax.set_xlabel("epochs", fontsize=16)
         ax.set_ylabel("loss", fontsize=16)
         # reset consistent axis for comparison purposes
-        plt.ylim([0, 1])
+        #plt.ylim([0, 1])
         plt.show()
 
-    def get_accuracy_graph(epochs, train_accuracies, test_accuracies):
+    def get_accuracy_graph(self, epochs, train_accuracies, test_accuracies=None):
         
-        epochs_array = [i for i in range (1, epochs, epochs/10)]
+        epochs_array = [i for i in range (0, epochs)]
         
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20,10))
-        ax.plot(epochs_array, train_accuracies, color="orange", label="train accuracies", ls='dashed')
-        ax.plot(epochs_array, test_accuracies, color="blue", label="train accuracies")
+        ax.plot(epochs_array, train_accuracies, color="orange", label="train_accuracies", ls='dashed')
+        #ax.plot(epochs_array, test_accuracies, color="blue", label="test_accuracies")
         ax.grid(alpha=0.25)
         ax.set_axis_on()
         ax.legend(loc="lower right", fontsize=16)
         ax.set_xlabel("epochs", fontsize=16)
         ax.set_ylabel("loss", fontsize=16)
         # reset consistent axis for comparison purposes
-        plt.ylim([0, 1])
+        #plt.ylim([0, 1])
         plt.show()
-
 
 # 2: get dataloaders from the first checkpoint
 training_data = CustomImageDataset("data/output/train.csv", "data/train/", transforms)
-# val_data = CustomImageDataset("data/output/val.csv", "data/val/", transforms)
+val_data = CustomImageDataset("data/output/val.csv", "data/val/", transforms)
 test_data = CustomImageDataset("data/output/test.csv", "data/test/", transforms)
 
 train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True)
-# val_dataloader = DataLoader(val_data, batch_size=64, shuffle=True)
+val_dataloader = DataLoader(val_data, batch_size=64, shuffle=True)
 test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True)
 
