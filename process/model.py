@@ -38,7 +38,7 @@ class CustomNeuralNetwork(nn.Module):
             nn.Linear(59536, 120),                                   # THIRD LAYER: LINEAR YEAR, HIDDEN LAYER 2
             nn.ReLU(),                                                # HIDDEN LAYER's ACTIVATION FUNCION
             nn.Linear(120, 84),                                       # FOURTH LAYER: LINEAR YEAR, HIDDEN LAYER 3
-            nn.ReLU(),                                                # HIDDEN LAYER's ACTIVATION FUNCION
+            nn.Sigmoid(),                                                # HIDDEN LAYER's ACTIVATION FUNCION
             # output layer
             nn.Linear(84, 2)                                          # OUTPUT LAYER
         )
@@ -152,7 +152,7 @@ class CustomNeuralNetwork(nn.Module):
         # Same note as above 
         test_recall = recall_score(tot_pred, all_labels, pos_label=0)
 
-        return test_acc, test_recall, avg_test_loss
+        return test_acc, test_recall, avg_test_loss, tot_pred
 
 
     def get_loss_graph(self, epochs, train_losses, test_losses=None):
