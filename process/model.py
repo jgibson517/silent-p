@@ -47,10 +47,10 @@ class CustomNeuralNetwork(nn.Module):
         # Jack: Math for the input size for first nn.Linear
         # Image features
         # Before forward: 1277760 (968 * 1320; height x width) 
-        # First Convultion layer: adds 625176 (1902936)
+        # First Convolution layer: adds 625176 (1902936)
         # Second layer: pools new features together: removes 652488 features (1250448)
         # Final Total before linear tranformation: 1250448 
-            # layers: [0, 16, 239, 327] - same as our calculation 
+            # layers: [0, 16, 239, 327] - same as our calculation
 
         # 3: Define a Loss function and optimizer
         self.criterion = nn.CrossEntropyLoss()
@@ -187,7 +187,7 @@ class CustomNeuralNetwork(nn.Module):
         ax.set_axis_on()
         ax.legend(loc="lower right", fontsize=16)
         ax.set_xlabel("epochs", fontsize=16)
-        ax.set_ylabel("loss", fontsize=16)
+#        ax.set_ylabel("loss", fontsize=16)
 
         plt.show()
 
