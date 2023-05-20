@@ -52,7 +52,7 @@ class CustomNeuralNetwork(nn.Module):
         # Final Total before linear tranformation: 1250448 
             # layers: [0, 16, 239, 327] - same as our calculation
 
-        # 3: Define a Loss function and optimizer
+        # 3: Define a Loss function a nd optimizer
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.SGD(self.parameters(), lr=0.001, momentum=0.9)
 
