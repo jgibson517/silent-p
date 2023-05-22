@@ -11,13 +11,13 @@ from sklearn.metrics import recall_score, confusion_matrix
 
 # internal imports
 import os
-from .data_module import CustomImageDataset, transforms
+from .data_module import CustomImageDataset
+from .transforms import base_transforms, color_transforms, edges_transforms, both_transforms
 
 # create neural net object
 class CustomNeuralNetwork(nn.Module):
-    def __init__(self):
+    def __init__(self, eta):
         super().__init__()
-        
         # inspire by Turing award winning LeCun, Bengio and Hinton's paper from 1998
         # https://ieeexplore.ieee.org/document/726791 (cited more than 25,000 times!!!!!!!!!)
         # code from https://blog.paperspace.com/writing-lenet5-from-scratch-in-python/ 
@@ -38,7 +38,7 @@ class CustomNeuralNetwork(nn.Module):
             nn.Linear(59536, 120),                                   # THIRD LAYER: LINEAR YEAR, HIDDEN LAYER 2
             nn.ReLU(),                                                # HIDDEN LAYER's ACTIVATION FUNCION
             nn.Linear(120, 84),                                       # FOURTH LAYER: LINEAR YEAR, HIDDEN LAYER 3
-            nn.ReLU(),                                                # HIDDEN LAYER's ACTIVATION FUNCION
+            nn.ReLU(),                                               # HIDDEN LAYER's ACTIVATION FUNCION
             # output layer
             nn.Linear(84, 2)                                          # OUTPUT LAYER
         )
@@ -54,7 +54,7 @@ class CustomNeuralNetwork(nn.Module):
 
         # 3: Define a Loss function a nd optimizer
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = optim.SGD(self.parameters(), lr=0.001, momentum=0.9)
+        self.optimizer = optim.SGD(self.parameters(), lr=eta, momentum=0.9)
 
     def forward(self, x):
         out = self.LeNet(x)
@@ -171,33 +171,26 @@ class CustomNeuralNetwork(nn.Module):
         avg_test_loss = test_loss / (i + 1)
 
         # recall
-        test_recall = recall_score(tot_pred, all_labels, pos_label=0)
+        test_recall = recall_score(y_true = all_labels, 
+                                      y_pred = tot_pred, 
+                                      pos_label=0)
 
         return avg_test_loss, test_acc, test_recall
 
 
-    def create_graph(self, epochs, epoch_step, train_metric_list, val_metric_list):
+    def create_graph(epochs, train_metric_list, val_metric_list, train_label, val_label, title):
                 
-        epochs_array = [i for i in range(epochs) if epochs % epoch_step == 0]
+        epochs_array = [i for i in range(epochs)]
         
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20,10))
-        ax.plot(epochs_array, train_metric_list, color="orange", label="train metric", ls='dashed')
-        ax.plot(epochs_array, val_metric_list, color="blue", label="test (val) metric")
+        ax.plot(epochs_array, train_metric_list, color="orange", label=train_label, ls='dashed')
+        ax.plot(epochs_array, val_metric_list, color="blue", label=val_label)
         ax.grid(alpha=0.25)
         ax.set_axis_on()
         ax.legend(loc="lower right", fontsize=16)
-        ax.set_xlabel("epochs", fontsize=16)
-#        ax.set_ylabel("loss", fontsize=16)
+        ax.set_xlabel("Epochs", fontsize=16)
+        ax.set_title(title, fontsize=16)
 
         plt.show()
 
-# # 2: get dataloaders from the first checkpoint
-
-# training_data = CustomImageDataset("data/output/train.csv", "data/train/", transforms)
-# val_data = CustomImageDataset("data/output/val.csv", "data/val/", transforms)
-# test_data = CustomImageDataset("data/output/test.csv", "data/test/", transforms)
-
-# train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True)
-# val_dataloader = DataLoader(val_data, batch_size=64, shuffle=True)
-# test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True)
 
