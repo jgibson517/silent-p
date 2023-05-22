@@ -62,6 +62,10 @@ class LogisticRegression(torch.nn.Module):
     def __init__(self):
         super().__init__()
         self.linear = nn.Linear(input_size, num_classes)
+        print('weight dtype:', self.linear.weight.dtype, '\nweight shape:',  self.linear.weight.shape)
+        print('weight dtype:', self.linear.weight.dtype, '\nweight shape:',  self.linear.weight.shape)
+
+#        print(self.linear.input)
 
     def forward(self, xb):
         xb = xb.view(xb.shape[0],-1)
