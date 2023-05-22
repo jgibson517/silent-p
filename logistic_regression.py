@@ -13,7 +13,8 @@ import torchvision.transforms as T
 from torchvision.io import read_image
 from torch.utils.data import Dataset, DataLoader
 # from process.model import CustomNeuralNetwork   #internal
-from process.data_module import CustomImageDataset, base_transforms  #internal
+from process.data_module import CustomImageDataset  #internal
+from process.transforms import base_transforms, edges_transforms, color_transforms, both_transforms 
 from process.load import collect_image_files
 
 ################################################################################
@@ -38,8 +39,8 @@ collect_image_files('val')
 
 # Load original x-rays and apply transformations
 training_data = CustomImageDataset("data2/paths/train.csv", "data2/train/", base_transforms)
-val_data = CustomImageDataset("data2/paths/val.csv", "data2/val/")
-test_data = CustomImageDataset("data2/paths/test.csv", "data2/test/")
+val_data = CustomImageDataset("data2/paths/val.csv", "data2/val/", base_transforms)
+test_data = CustomImageDataset("data2/paths/test.csv", "data2/test/", base_transforms)
 
 # Load groups/batches of x-rays for analysis
 train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True)
@@ -111,8 +112,7 @@ model = LogisticRegression()
 
 for images, labels in train_dataloader:
     print("images.shape: " , images.shape)
-    
-    print("img_tensor.shape: ", img_tensor.shape, "label:", label)
+    print("img_tensor.shape: ", img_tensor.shape, "label:", label)  #ERROR MESSAGE
     output = model(images)
     # break;
 print("output.shape: ", output.shape)
