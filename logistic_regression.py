@@ -59,7 +59,7 @@ print(img_tensor.shape, label)
 class LogisticRegression(torch.nn.Module):
     """
     """
-    def __init__(self,):
+    def __init__(self):
         super(LogisticRegression, self).__init__()
         self.linear = torch.nn.Linear(input_size, num_classes)
 
@@ -112,29 +112,34 @@ model = LogisticRegression()
 
 for images, labels in train_dataloader:
     print("images.shape: " , images.shape)
-    print("img_tensor.shape: ", img_tensor.shape, "label:", label)  #ERROR MESSAGE
-    output = model(images)
+    print("img_tensor.shape: ", img_tensor.shape, "label:", label)
+    output = model(images)                                          #ERROR MESSAGE!!!
     # break;
 print("output.shape: ", output.shape)
 print("output: ", output[:3].data)
 
+#Probabilities
 probs = F.softmax(output, dim=1)
 print("Probability: \n" ,probs[122:126].data)
 
+#Predictions
 maxprob, preds = torch.max(probs, dim=1)
 print(preds)
 print(maxprob)
 
+#Labels
 labels
 
+#Accuracy
 accuracy(output, labels)
 
+#Loss
 loss_fn = F.cross_entropy
 loss = loss_fn(output, labels) 
 loss
 
+#Evaluate model
 evaluate(model, val_dataloader)
-
 history = fit(5, learning_rate, model, training_data, val_dataloader)
 accuracies = [r['val_acc'] for r in history]
 plt.plot(accuracies, '-x')
