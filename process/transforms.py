@@ -127,13 +127,12 @@ both_transforms = T.Compose(
     T.Resize((256,256)),
     T.Grayscale(num_output_channels=1),
 
+    #color
+    normalize,
+    T.Lambda(tophat),
+
     #edges
     T.GaussianBlur((5,5)),
-    T.Lambda(sobel),
+    T.ColorJitter(contrast=(0,10))
     
-    #color
-    T.ToTensor(), #rescale
-    T.Normalize(mean=0, std=255),
-    T.ColorJitter()
-
     ])
