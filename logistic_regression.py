@@ -60,12 +60,13 @@ class LogisticRegression(torch.nn.Module):
     """
     """
     def __init__(self):
-        super(LogisticRegression, self).__init__()
-        self.linear = torch.nn.Linear(input_size, num_classes)
+        super().__init__()
+        self.linear = nn.Linear(input_size, num_classes)
 
-    def forward(self, x):
-        outputs = torch.sigmoid(self.linear(x))
-        return outputs
+    def forward(self, xb):
+        xb = xb.view(xb.shape[0],-1)
+        out = self.linear(xb)
+        return out
     
     def train_step(self, batch):
         images, labels = batch
@@ -112,7 +113,7 @@ model = LogisticRegression()
 
 for images, labels in train_dataloader:
     print("images.shape: " , images.shape)
-    print("img_tensor.shape: ", img_tensor.shape, "label:", label)
+    print("img_tensor.shape: ", img_tensor.shape)
     output = model(images)                                          #ERROR MESSAGE!!!
     # break;
 print("output.shape: ", output.shape)
