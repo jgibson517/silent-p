@@ -16,6 +16,8 @@ from torch.utils.data import Dataset, DataLoader
 from process.data_module import CustomImageDataset  #internal
 from process.transforms import base_transforms, edges_transforms, color_transforms, both_transforms 
 from process.load import collect_image_files
+from sklearn.metrics import recall_score, confusion_matrix
+
 
 ################################################################################
 # CONSTANTS
@@ -26,7 +28,7 @@ num_classes = 2
 #batch_size = 64
 image_size = 256*256
 learning_rate = 0.0001
-input_size = image_size
+input_size = image_size 
 
 ################################################################################
 # GET DATA
@@ -38,14 +40,28 @@ collect_image_files('train')
 collect_image_files('val')
 
 # Load original x-rays and apply transformations
-training_data = CustomImageDataset("data2/paths/train.csv", "data2/train/", base_transforms)
-val_data = CustomImageDataset("data2/paths/val.csv", "data2/val/", base_transforms)
-test_data = CustomImageDataset("data2/paths/test.csv", "data2/test/", base_transforms)
+# training_data = CustomImageDataset("data2/paths/train.csv", "data2/train/", base_transforms)
+# val_data = CustomImageDataset("data2/paths/val.csv", "data2/val/", base_transforms)
+# test_data = CustomImageDataset("data2/paths/test.csv", "data2/test/", base_transforms)
+
+# training_data = CustomImageDataset("data2/paths/train.csv", "data2/train/", edges_transforms)
+# val_data = CustomImageDataset("data2/paths/val.csv", "data2/val/", edges_transforms)
+# test_data = CustomImageDataset("data2/paths/test.csv", "data2/test/", edges_transforms)
+
+training_data = CustomImageDataset("data2/paths/train.csv", "data2/train/", color_transforms)
+val_data = CustomImageDataset("data2/paths/val.csv", "data2/val/", color_transforms)
+test_data = CustomImageDataset("data2/paths/test.csv", "data2/test/", color_transforms)
+
+# training_data = CustomImageDataset("data2/paths/train.csv", "data2/train/", both_transforms)
+# val_data = CustomImageDataset("data2/paths/val.csv", "data2/val/", both_transforms)
+# test_data = CustomImageDataset("data2/paths/test.csv", "data2/test/", both_transforms)
+
+
 
 # Load groups/batches of x-rays for analysis
-train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True)
-val_dataloader = DataLoader(val_data, batch_size=64, shuffle=True)
-test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True)
+train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True, num_workers=3, pin_memory=True)
+val_dataloader = DataLoader(val_data, batch_size=64, shuffle=True, num_workers=3, pin_memory=True)
+test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True, num_workers=3, pin_memory=True)
 
 # Describe dataset
 print(len(training_data))
@@ -62,32 +78,50 @@ class LogisticRegression(torch.nn.Module):
     def __init__(self):
         super().__init__()
         self.linear = nn.Linear(input_size, num_classes)
-        print('weight dtype:', self.linear.weight.dtype, '\nweight shape:',  self.linear.weight.shape)
-        print('weight dtype:', self.linear.weight.dtype, '\nweight shape:',  self.linear.weight.shape)
 
 #        print(self.linear.input)
 
     def forward(self, xb):
         xb = xb.view(xb.shape[0],-1)
+        xb = xb.type(torch.float32)
         out = self.linear(xb)
         return out
     
-    def train_step(self, batch):
+    def training_step(self, batch):
         images, labels = batch
         out = self(images)                  
         loss = F.cross_entropy(out, labels)
         return loss
 
-    def val_step(self, batch):
+    def validation_step(self, batch):
         images, labels = batch
         out = self(images)                  
         loss = F.cross_entropy(out, labels) 
         acc = accuracy(out, labels)
-        return loss
+        rec = recall(out, labels)
+        return {'val_loss': loss.detach(), 'val_acc': acc.detach(), 'val_rec': rec.detach()}
+
+    def validation_epoch_end(self, outputs):
+        batch_losses = [x['val_loss'] for x in outputs]
+        epoch_loss = torch.stack(batch_losses).mean()   # Combine losses
+        batch_accs = [x['val_acc'] for x in outputs]
+        epoch_acc = torch.stack(batch_accs).mean()      # Combine accuracies
+        batch_recs = [x['val_rec'] for x in outputs]
+        epoch_rec = torch.stack(batch_recs).mean()      # Combine recalls
+        return {'val_loss': epoch_loss.item(), 'val_acc': epoch_acc.item(), 'val_rec': epoch_rec.item()}
+    
+    def epoch_end(self, epoch, result):
+        print("Epoch [{}], val_loss: {:.4f}, val_acc: {:.4f}, val_rec: {:.4f}".format(epoch, result['val_loss'], result['val_acc'], result['val_rec']))    
 
 def accuracy(outputs, labels):
     _, preds = torch.max(outputs, dim=1)
     return torch.tensor(torch.sum(preds==labels).item() / len(preds))
+
+def recall(outputs, labels):
+    _, preds = torch.max(outputs, dim=1)
+    TP = torch.sum((preds == labels) & (labels == 1)).item()
+    total_positive = torch.sum(labels == 1).item()
+    return torch.tensor(TP / total_positive)
 
 def evaluate(model, val_loader):
     outputs = [model.validation_step(batch) for batch in val_loader]
@@ -116,8 +150,9 @@ def fit(epochs, lr, model, train_loader, val_loader, opt_func=torch.optim.SGD):
 model = LogisticRegression()
 
 for images, labels in train_dataloader:
-    print("images.shape: " , images.shape)
-    print("img_tensor.shape: ", img_tensor.shape)
+    # print("images.shape: " , images.shape)
+    # print("img_tensor.shape: ", img_tensor.shape)
+    images = images.type(torch.float32)
     output = model(images)                                          #ERROR MESSAGE!!!
     # break;
 print("output.shape: ", output.shape)
@@ -125,7 +160,7 @@ print("output: ", output[:3].data)
 
 #Probabilities
 probs = F.softmax(output, dim=1)
-print("Probability: \n" ,probs[122:126].data)
+print("Probability: \n" ,probs.data)
 
 #Predictions
 maxprob, preds = torch.max(probs, dim=1)
@@ -135,8 +170,9 @@ print(maxprob)
 #Labels
 labels
 
-#Accuracy
+#Metrics
 accuracy(output, labels)
+recall(output, labels)
 
 #Loss
 loss_fn = F.cross_entropy
@@ -145,13 +181,15 @@ loss
 
 #Evaluate model
 evaluate(model, val_dataloader)
-history = fit(5, learning_rate, model, training_data, val_dataloader)
+#history = fit(epochs, learning_rate, model, training_data, val_dataloader)
+history = fit(epochs, learning_rate, model, train_dataloader, val_dataloader)
 accuracies = [r['val_acc'] for r in history]
+recalls = [r['val_rec'] for r in history]
 plt.plot(accuracies, '-x')
 plt.xlabel('epoch')
 plt.ylabel('accuracy')
 plt.title('Accuracy vs. No. of epochs')
-
+plt.show()
 
 ################################################################################
 # END
