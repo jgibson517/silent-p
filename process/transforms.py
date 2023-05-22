@@ -96,13 +96,14 @@ base_transforms = T.Compose(
 edges_transforms = T.Compose(
     [
     #base
-    T.CenterCrop(size=(512,924)),
+    T.CenterCrop(size=(720,720)),
     T.Resize((256,256)),
     T.Grayscale(num_output_channels=1),
 
     #edges
     T.GaussianBlur((5,5)),
-    T.Lambda(sobel)
+    #T.Lambda(sobel)
+    T.ColorJitter(contrast=(0,10))
     ])
 
 color_transforms = T.Compose(
