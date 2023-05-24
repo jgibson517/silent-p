@@ -178,7 +178,6 @@ class CustomNeuralNetwork(nn.Module):
         ax.legend(loc="lower right", fontsize=16)
         ax.set_xlabel("Epochs", fontsize=16)
         ax.set_title(title, fontsize=16)
-        ax.ylim((0,1))
 
         plt.show()
 
