@@ -18,41 +18,29 @@ from .transforms import base_transforms, color_transforms, edges_transforms, bot
 class CustomNeuralNetwork(nn.Module):
     def __init__(self, eta):
         super().__init__()
-        # inspire by Turing award winning LeCun, Bengio and Hinton's paper from 1998
-        # https://ieeexplore.ieee.org/document/726791 (cited more than 25,000 times!!!!!!!!!)
-        # code from https://blog.paperspace.com/writing-lenet5-from-scratch-in-python/ 
         self.LeNet = nn.Sequential(     
             # convolutional layers            
-            nn.Sequential(                                            # FIRST LAYER: (INPUT LAYER)
-              nn.Conv2d(1, 6, kernel_size=5, stride=1, padding=0),    # CONVOLUTION 
+            nn.Sequential(                                            
+              nn.Conv2d(1, 6, kernel_size=5, stride=1, padding=0),    
               nn.BatchNorm2d(6),
               nn.ReLU(),
-              nn.MaxPool2d(kernel_size = 2, stride = 2)),             # POOLING
-            nn.Sequential(                                            # SECOND LAYER: HIDDEN LAYER 1
-              nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0),   # CONVOLUTION 
+              nn.MaxPool2d(kernel_size = 2, stride = 2)),            
+            nn.Sequential(                                            
+              nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0),   
               nn.BatchNorm2d(16),
               nn.ReLU(),
-              nn.MaxPool2d(kernel_size = 2, stride = 2)),             # POOLING
+              nn.MaxPool2d(kernel_size = 2, stride = 2)),          
             # fully connected layers
             nn.Flatten(),
-            nn.Linear(59536, 120),                                   # THIRD LAYER: LINEAR YEAR, HIDDEN LAYER 2
-            nn.ReLU(),                                                # HIDDEN LAYER's ACTIVATION FUNCION
-            nn.Linear(120, 84),                                       # FOURTH LAYER: LINEAR YEAR, HIDDEN LAYER 3
-            nn.ReLU(),                                               # HIDDEN LAYER's ACTIVATION FUNCION
+            nn.Linear(59536, 120),                         
+            nn.ReLU(),                                      
+            nn.Linear(120, 84),                                      
+            nn.ReLU(),                                           
             # output layer
-            nn.Linear(84, 2)                                          # OUTPUT LAYER
+            nn.Linear(84, 2)                                 
         )
 
-
-        # Jack: Math for the input size for first nn.Linear
-        # Image features
-        # Before forward: 1277760 (968 * 1320; height x width) 
-        # First Convolution layer: adds 625176 (1902936)
-        # Second layer: pools new features together: removes 652488 features (1250448)
-        # Final Total before linear tranformation: 1250448 
-            # layers: [0, 16, 239, 327] - same as our calculation
-
-        # 3: Define a Loss function a nd optimizer
+        #Define a Loss function a nd optimizer
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.SGD(self.parameters(), lr=eta, momentum=0.9)
 
@@ -178,7 +166,7 @@ class CustomNeuralNetwork(nn.Module):
         return avg_test_loss, test_acc, test_recall
 
 
-    def create_graph(epochs, train_metric_list, val_metric_list, train_label, val_label, title):
+    def create_graph(self, epochs, train_metric_list, val_metric_list, train_label, val_label, title):
                 
         epochs_array = [i for i in range(epochs)]
         
