@@ -1,77 +1,77 @@
-#Libraries
 import torch
-import numpy as np
-from tqdm import tqdm
-import torch.nn as nn
-import matplotlib.pyplot as plt
+import torch.nn as nn 
+import torch.optim as optim
+import torch.nn.functional as F 
+from torch.utils.data import DataLoader
+from process.data_module import CustomImageDataset
+from process.transforms import base_transforms, edges_transforms, color_transforms, both_transforms 
 
-# Get data
-X_train, X_test, y_train, y_test = train_test_split(
- inputs, labels, test_size=0.33, random_state=42)
-
-class LogisticRegression(torch.nn.Module):
+class LogisticRegression(nn.Module):
     """
+    This class creates a logistic regression model, that will serve as a 
+    baseline to compare the performance of our CNN model.
     """
-    def __init__(self, input_dim, output_dim):
-        super(LogisticRegression, self).__init__()
-        self.linear = torch.nn.Linear(input_dim, output_dim)
+    def __init__(self, image_size, labels):
+        super().__init__()
+        self.linear = nn.Linear(image_size, labels)
 
-    def forward(self, x):
-        outputs = torch.sigmoid(self.linear(x))
-        return outputs
-
-epochs = 200
-input_dim = 2 # Two inputs x1 and x2 
-output_dim = 1 # Single binary output 
-learning_rate = 0.01
-
-model = LogisticRegression(input_dim, output_dim)
-
-criterion = torch.nn.BCELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
-
-X_train, X_test = torch.Tensor(X_train),torch.Tensor(X_test)
-y_train, y_test = torch.Tensor(y_train),torch.Tensor(y_test)
-
-losses_train = []
-losses_test = []
-Iterations = []
-iter = 0
-for epoch in tqdm(range(int(epochs)),desc='Training Epochs'):
-    x = X_train
-    labels = y_train
-    optimizer.zero_grad() # Setting our stored gradients equal to zero
-    outputs = model(X_train)
-    loss = criterion(torch.squeeze(outputs), labels) # [200,1] -squeeze-> [200]
+    def forward(self, xb):
+        xb = xb.view(xb.shape[0],-1)
+        xb = xb.type(torch.float32)
+        out = self.linear(xb)
+        return out
     
-    loss.backward() # Computes the gradient of the given tensor w.r.t. graph leaves 
+    def training_step(self, batch):
+        images, labels = batch
+        out = self(images)                  
+        loss = F.cross_entropy(out, labels)
+        return loss
+
+    def testing_step(self, batch):
+        images, labels = batch
+        out = self(images)                  
+        loss = F.cross_entropy(out, labels) 
+        acc = accuracy(out, labels)
+        rec = recall(out, labels)
+        return {'loss': loss.detach(), 'accuracy': acc.detach(), 'recall': rec.detach()}
+
+    def testing_epoch_end(self, outputs):
+        batch_losses = [x['loss'] for x in outputs]
+        epoch_loss = torch.stack(batch_losses).mean()
+        batch_accs = [x['accuracy'] for x in outputs]
+        epoch_acc = torch.stack(batch_accs).mean() 
+        batch_recs = [x['recall'] for x in outputs]
+        epoch_rec = torch.stack(batch_recs).mean()
+        return {'accuracy': epoch_acc.item(), 'recall': epoch_rec.item()}
     
-    optimizer.step() # Updates weights and biases with the optimizer (SGD)
-    
-    iter+=1
-    if iter%10000==0:
-        # calculate Accuracy
-        with torch.no_grad():
-            # Calculating the loss and accuracy for the test dataset
-            correct_test = 0
-            total_test = 0
-            outputs_test = torch.squeeze(model(X_test))
-            loss_test = criterion(outputs_test, y_test)
-            
-            predicted_test = outputs_test.round().detach().numpy()
-            total_test += y_test.size(0)
-            correct_test += np.sum(predicted_test == y_test.detach().numpy())
-            accuracy_test = 100 * correct_test/total_test
-            losses_test.append(loss_test.item())
-            
-            # Calculating the loss and accuracy for the train dataset
-            total = 0
-            correct = 0
-            total += y_train.size(0)
-            correct += np.sum(torch.squeeze(outputs).round().detach().numpy() == y_train.detach().numpy())
-            accuracy = 100 * correct/total
-            losses_train.append(loss.item())
-            Iterations.append(iter)
-            
-            print(f"Iteration: {iter}. \nTest - Loss: {loss_test.item()}. Accuracy: {accuracy_test}")
-            print(f"Train -  Loss: {loss.item()}. Accuracy: {accuracy}\n")
+    def epoch_print(self, epoch):
+        print("Epoch {}".format(epoch))    
+
+def accuracy(outputs, labels):
+    _, preds = torch.max(outputs, dim=1)
+    return torch.tensor(torch.sum(preds==labels).item() / len(preds))
+
+def recall(outputs, labels):
+    _, preds = torch.max(outputs, dim=1)
+    TP = torch.sum((preds == labels) & (labels == 1)).item()
+    total_positive = torch.sum(labels == 1).item()
+    return torch.tensor(TP / total_positive)
+
+def evaluate(model, val_loader):
+    outputs = [model.testing_step(batch) for batch in val_loader]
+    return model.testing_epoch_end(outputs)
+
+def fit(epochs, lr, model, train_dataloader, test_dataloader, opt=optim.SGD):
+    metrics = []
+    optimizer = opt(model.parameters(), lr)
+    for epoch in range(epochs):
+        for batch in train_dataloader:
+            loss = model.training_step(batch)
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+        result = evaluate(model, test_dataloader)
+        model.epoch_print(epoch)
+        if epoch == epochs-1:
+            metrics.append(result)
+    return metrics
