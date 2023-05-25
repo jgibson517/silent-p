@@ -2,9 +2,6 @@ import torch
 import torch.nn as nn 
 import torch.optim as optim
 import torch.nn.functional as F 
-from torch.utils.data import DataLoader
-from process.data_module import CustomImageDataset
-from process.transforms import base_transforms, edges_transforms, color_transforms, both_transforms 
 
 class LogisticRegression(nn.Module):
     """
