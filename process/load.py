@@ -14,11 +14,11 @@ def collect_image_files(split):
     Outputs: csv file
     '''
     data = []
-    img_dir = f"data2/{split}"
+    img_dir = f"data/{split}"
 
     for label in ["NORMAL", "PNEUMONIA"]:
 
-        img_dir = f"data2/{split}/{label}"
+        img_dir = f"data/{split}/{label}"
 
         paths = os.listdir(img_dir)
 
@@ -39,7 +39,7 @@ def collect_image_files(split):
 
     comb_df = pd.concat(data)
 
-    comb_df.to_csv(f'data2/paths/{split}.csv')
+    comb_df.to_csv(f'data/paths/{split}.csv')
 
             
 
