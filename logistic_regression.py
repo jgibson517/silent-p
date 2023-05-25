@@ -11,7 +11,7 @@ class LogisticRegression(nn.Module):
     This class creates a logistic regression model, that will serve as a 
     baseline to compare the performance of our CNN model.
     """
-    def __init__(self, labels, image_size):
+    def __init__(self, image_size, labels):
         super().__init__()
         self.linear = nn.Linear(image_size, labels)
 
